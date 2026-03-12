@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Inventory Pro</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+
+    <style>
+        /* INTERNAL CSS - Works even if CDN is blocked */
+        body { font-family: sans-serif; background-color: #f1f5f9; margin: 0; color: #1e293b; }
+        nav { background-color: #0f172a; position: sticky; top: 0; display: flex; box-shadow: 0 2px 4px rgba(0,0,0,0.1); z-index: 100; }
+        .nav-btn { flex: 1; padding: 15px; border: none; background: none; color: white; font-weight: bold; text-transform: uppercase; font-size: 12px; cursor: pointer; }
+        .nav-btn.active { border-bottom: 3px solid #3b82f6; color: #3b82f6; }
+        
+        .container { max-width: 500px; margin: 20px auto; padding: 0 15px; }
+        .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        
+        h2 { margin-top: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 11px; font-weight: bold; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px; }
+        
+        select, input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #e2e8f0; background: #f8fafc; box-sizing: border-box; font-size: 16px; }
+        button.submit-btn { width: 100%; padding: 15px; background: #2563eb; color: white; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; cursor: pointer; }
+        
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; font-size: 10px; color: #94a3b8; padding: 10px; border-bottom: 1px solid #f1f5f9; }
+        td { padding: 12px 10px; border-bottom: 1px solid #f1f5f9; }
+        .qty-text { font-weight: bold; color: #2563eb; text-align: right; }
+
+        .history-item { display: flex; justify-content: space-between; padding: 12px; background: #f8fafc; border-radius: 8px; margin-bottom: 10px; border: 1px solid #f1f5f9; }
+        .text-red { color: #ef4444; font-weight: bold; }
+        .text-green { color: #10b981; font-weight: bold; }
+        .hidden { display: none; }
+        .pdf-btn { background: #0f172a; color: white; padding: 5px 10px; border-radius: 4px; font-size: 10px; border: none; float: right; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <button onclick="showPage('entry', this)" class="nav-btn active">Entry</button>
+        <button onclick="showPage('stock', this)" class="nav-btn">Stock</button>
+        <button onclick="showPage('history', this)" class="nav-btn">History</button>
+    </nav>
+
+    <div class="container">
+        <div id="page-entry" class="card">
+            <h2>📦 New Entry</h2>
+            <form id="entryForm">
+                <div class="form-group">
+                    <label>Tire Size</label>
+                    <select id="size">
+                        <option value="145/80 R12(sturdo)">145/80 R12(sturdo)</option>
+                        <option value="145/80 R12(S248)">145/80 R12(S248)</option>
+                        <option value="145/70 R13(sturdo)">145/70 R13(sturdo)</option>
+                        <option value="145/80 R13(sturdo)">145/80 R13(sturdo)</option>
+                        <option value="155/80 R13 LT(L607)">155/80 R13 LT(L607)</option>
+                        <option value="155/65 R13(sturdo)">155/65 R13(sturdo)</option>
+                        <option value="155/80 R13(sturdo)">155/80 R13(sturdo)</option>
+                        <option value="155/70 R13(sturdo)">155/70 R13(sturdo)</option>
+                        <option value="165/65 R14(sturdo)">165/65 R14(sturdo)</option>
+                        <option value="175/70 R14(sturdo)">175/70 R14(sturdo)</option>
+                        <option value="175/65 R14(sturdo)">175/65 R14(sturdo)</option>
+                        <option value="155/65 R14(sturdo)">155/65 R14(sturdo)</option>
+                        <option value="165/80 R14(sturdo)">165/80 R14(sturdo)</option>
+                        <option value="185/65 R14(sturdo)">185/65 R14(sturdo)</option>
+                        <option value="165/70 R14(sturdo)">165/70 R14(sturdo)</option>
+                        <option value="185/70 R14(sturdo)">185/70 R14(sturdo)</option>
+                        <option value="185/65 R15(sturdo)">185/65 R15(sturdo)</option>
+                        <option value="175/60 R15(sturdo)">175/60 R15(sturdo)</option>
+                        <option value="195/60 R15(sturdo)">195/60 R15(sturdo)</option>
+                        <option value="195/65 R15(sturdo)">195/65 R15(sturdo)</option>
+                        <option value="215/75 R15(HT D689)">215/75 R15(HT D689)</option>
+                        <option value="215/75 R15(AT D689)">215/75 R15(AT D689)</option>
+                        <option value="205/65 R15(B390)">205/65 R15(B390)</option>
+                        <option value="195/55 R16(sturdo)">195/55 R16(sturdo)</option>
+                        <option value="215/60 R16(Turanza)">215/60 R16(Turanza)</option>
+                        <option value="235/70 R16(D689)">235/70 R16(D689)</option>
+                        <option value="205/65 R16(B390)">205/65 R16(B390)</option>
+                        <option value="195/60 R16(T001)">195/60 R16(T001)</option>
+                        <option value="215/60 R17(DHP)">215/60 R17(DHP)</option>
+                        <option value="215/55 R17(Turanza)">215/55 R17(Turanza)</option>
+                        <option value="235/65 R17(D684)">235/65 R17(D684)</option>
+                        <option value="215/55 R18(Turanza 6i)">215/55 R18(Turanza 6i)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="type">
+                        <option value="Purchase">Purchase (+)</option>
+                        <option value="Sales">Sales (-)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantity</label>
+                    <input type="number" id="qty" placeholder="0" required>
+                </div>
+                <button type="submit" id="submitBtn" class="submit-btn">Submit Entry</button>
+            </form>
+        </div>
+
+        <div id="page-stock" class="card hidden">
+            <button onclick="exportPDF()" class="pdf-btn">Download PDF</button>
+            <h2>Current Stock</h2>
+            <table id="stockTable">
+                <thead>
+                    <tr><th>Size</th><th style="text-align:right">Qty</th></tr>
+                </thead>
+                <tbody id="stockBody"></tbody>
+            </table>
+        </div>
+
+        <div id="page-history" class="card hidden">
+            <div style="display:flex; justify-content: space-between; align-items:center; margin-bottom: 15px;">
+                <h2 style="margin:0">History</h2>
+                <input type="date" id="dateFilter" onchange="filterHistory()" style="width: auto; padding: 5px;">
+            </div>
+            <div id="historyList"></div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyDartNmxZuUnr6UK47750OZlUh9o8ZYwwo",
+            databaseURL: "https://inventory-management-sof-1acfb-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "inventory-management-sof-1acfb",
+            appId: "1:964690589517:web:dafcc08eea18c3db766904"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // NAV
+        function showPage(pageId, btn) {
+            document.getElementById('page-entry').classList.add('hidden');
+            document.getElementById('page-stock').classList.add('hidden');
+            document.getElementById('page-history').classList.add('hidden');
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            
+            var btns = document.getElementsByClassName('nav-btn');
+            for(var i=0; i<btns.length; i++) btns[i].classList.remove('active');
+            btn.classList.add('active');
+        }
+
+        // ENTRY
+        document.getElementById('entryForm').onsubmit = function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            btn.innerText = "...";
+
+            const size = document.getElementById('size').value;
+            const type = document.getElementById('type').value;
+            const qty = parseInt(document.getElementById('qty').value);
+            const date = new Date().toISOString().split('T')[0];
+            const stockKey = size.replace(/\//g, '-');
+
+            db.ref('stock/' + stockKey).once('value').then(snap => {
+                let current = snap.val() || 0;
+                if (type === 'Sales' && current < qty) {
+                    alert("Low Stock! Only " + current + " left.");
+                    throw new Error("low_stock");
+                }
+                const newQty = (type === 'Purchase') ? current + qty : current - qty;
+                return Promise.all([
+                    db.ref('stock/' + stockKey).set(newQty),
+                    db.ref('history').push({ size, type, qty, date })
+                ]);
+            }).then(() => {
+                alert("Success!");
+                document.getElementById('entryForm').reset();
+            }).catch(err => {
+                if(err.message !== "low_stock") alert("Error: " + err.message);
+            }).finally(() => {
+                btn.disabled = false;
+                btn.innerText = "Submit Entry";
+            });
+        };
+
+        // SYNC STOCK
+        db.ref('stock').on('value', snap => {
+            const data = snap.val();
+            const body = document.getElementById('stockBody');
+            body.innerHTML = "";
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    body.innerHTML += `<tr><td>${key.replace(/-/g, '/')}</td><td class="qty-text">${data[key]}</td></tr>`;
+                });
+            }
+        });
+
+        // SYNC HISTORY
+        let allHistory = [];
+        db.ref('history').on('value', snap => {
+            const data = snap.val();
+            allHistory = data ? Object.values(data).reverse() : [];
+            filterHistory();
+        });
+
+        function filterHistory() {
+            const date = document.getElementById('dateFilter').value;
+            const list = document.getElementById('historyList');
+            list.innerHTML = "";
+            allHistory.filter(e => !date || e.date === date).forEach(entry => {
+                const isSale = entry.type === 'Sales';
+                list.innerHTML += `
+                    <div class="history-item">
+                        <div><b>${entry.size}</b><br><small>${entry.date}</small></div>
+                        <div class="${isSale ? 'text-red' : 'text-green'}">${isSale ? '-' : '+'}${entry.qty}</div>
+                    </div>`;
+            });
+        }
+
+        function exportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Inventory", 10, 10);
+            doc.autoTable({ html: '#stockTable' });
+            doc.save("Stock.pdf");
+        }
+    </script>
+</body>
+</html>
